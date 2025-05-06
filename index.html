@@ -62,11 +62,8 @@
             background-color: #f8f8f8;
         }
         .preview-container.has-image {
-            cursor: ns-resize;
+            cursor: move;
             background-color: #ffffff;
-        }
-        .preview-container.has-image.horizontal {
-            cursor: ew-resize;
         }
         .preview-container::before {
             content: 'Click to Upload Image';
@@ -81,14 +78,6 @@
             font-size: 14px;
             letter-spacing: 0.05em;
             text-transform: lowercase;
-        }
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            .preview-container::before {
-                content: 'Tap to Upload Image';
-            }
         }
         .preview-container.has-image::before {
             opacity: 0;
@@ -161,63 +150,6 @@
             width: 100%;
             margin: 0;
         }
-        
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-        
-        .modal.show {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 90%;
-            text-align: center;
-        }
-        
-        .modal img {
-            max-width: 100%;
-            height: auto;
-            margin-bottom: 15px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .modal-text {
-            color: white;
-            margin: 15px 0;
-            text-align: center;
-            padding: 0 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .modal-text {
-                font-size: 14px;
-            }
-        }
-        
-        .sequence-btn {
-            margin-top: 0;
-        }
     </style>
 </head>
 <body>
@@ -228,17 +160,6 @@
             <img id="paperOverlay" class="paper-overlay" src="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/text%20owve%20paper.png" draggable="false">
         </div>
         <button id="exportBtn">Save Image</button>
-    </div>
-
-    <!-- Add modal markup -->
-    <div class="modal" id="exportModal">
-        <div class="modal-text">
-            Press and hold the image to save
-        </div>
-        <img id="exportImage" alt="Preview">
-        <div class="modal-buttons">
-            <button onclick="closeModal()">Close</button>
-        </div>
     </div>
 
     <script>
@@ -253,16 +174,12 @@
         paperTexture.crossOrigin = 'anonymous';
 
         let isDragging = false;
-        let startY = 0;
         let startX = 0;
-        let offsetY = 0;
+        let startY = 0;
         let offsetX = 0;
-        let isHorizontal = false;
-        let hasImage = false;
-        let lastTouchTime = 0;
+        let offsetY = 0;
         let scaleFactor = 1;
-        const minScale = 0.5;
-        const maxScale = 3;
+        let hasImage = false;
 
         // Prevent default touch behaviors
         document.addEventListener('touchmove', (e) => {
@@ -279,15 +196,6 @@
 
         // Handle click/tap for upload
         previewContainer.addEventListener('click', (e) => {
-            // Prevent double-tap zoom on mobile
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTouchTime;
-            lastTouchTime = currentTime;
-            if (tapLength < 500 && tapLength > 0) {
-                e.preventDefault();
-                return false;
-            }
-            
             if (!hasImage && !isDragging) {
                 imageInput.click();
             }
@@ -305,31 +213,16 @@
                         const containerHeight = containerWidth;
                         
                         const imageAspect = img.width / img.height;
-                        isHorizontal = imageAspect > 1;
+                        const width = containerWidth;
+                        const height = width / imageAspect;
                         
-                        if (isHorizontal) {
-                            const height = containerHeight;
-                            const width = height * imageAspect;
-                            previewImage.style.height = `${height}px`;
-                            previewImage.style.width = `${width}px`;
-                            previewContainer.classList.add('horizontal');
-                        } else {
-                            const width = containerWidth;
-                            const height = width / imageAspect;
-                            previewImage.style.width = `${width}px`;
-                            previewImage.style.height = `${height}px`;
-                            previewContainer.classList.remove('horizontal');
-                        }
-                        
+                        previewImage.style.width = `${width}px`;
+                        previewImage.style.height = `${height}px`;
                         previewImage.src = e.target.result;
                         hasImage = true;
                         previewContainer.classList.add('has-image');
                         previewImage.classList.add('loaded');
                         paperOverlay.classList.add('loaded');
-                        
-                        offsetX = 0;
-                        offsetY = 0;
-                        updateImagePosition();
                     }
                     img.src = e.target.result;
                 };
@@ -337,7 +230,10 @@
             }
         });
 
-        // 마우스 휠로 확대/축소
+        const minScale = 0.5;
+        const maxScale = 3;
+
+        // Mouse wheel zooming
         previewContainer.addEventListener('wheel', (e) => {
             if (!hasImage) return;
 
@@ -347,76 +243,68 @@
             applyTransform();
         }, { passive: false });
 
-        // 터치 확대/축소
-        let startTouchDistance = 0;
-        let initialScaleFactor = scaleFactor;
-
-        previewContainer.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                startTouchDistance = getTouchDistance(e.touches);
-                initialScaleFactor = scaleFactor;
-                e.preventDefault();
-            }
-        });
-
-        previewContainer.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2) {
-                const currentTouchDistance = getTouchDistance(e.touches);
-                const scaleChange = (currentTouchDistance - startTouchDistance) / 200;
-                scaleFactor = initialScaleFactor + scaleChange;
-                scaleFactor = Math.min(Math.max(scaleFactor, minScale), maxScale);
-                applyTransform();
-                e.preventDefault();
-            }
-        });
-
-        previewContainer.addEventListener('touchend', (e) => {
-            if (e.touches.length < 2) {
-                startTouchDistance = 0;
-            }
-        });
-
-        // 두 손가락 사이의 거리 계산
-        function getTouchDistance(touches) {
-            const dx = touches[0].clientX - touches[1].clientX;
-            const dy = touches[0].clientY - touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
         function applyTransform() {
-            const scaledWidth = previewImage.offsetWidth * scaleFactor;
-            const scaledHeight = previewImage.offsetHeight * scaleFactor;
-            const containerWidth = previewContainer.offsetWidth;
-            const containerHeight = previewContainer.offsetHeight;
-
-            const maxOffsetX = Math.max(0, (scaledWidth - containerWidth));
-            const maxOffsetY = Math.max(0, (scaledHeight - containerHeight));
-
-            offsetX = Math.min(0, Math.max(offsetX, -maxOffsetX));
-            offsetY = Math.min(0, Math.max(offsetY, -maxOffsetY));
-
             previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scaleFactor})`;
         }
 
-        function updateImagePosition() {
-            previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
+        // Touch and Mouse drag handling
+        previewContainer.addEventListener('mousedown', handleDragStart);
+        previewContainer.addEventListener('touchstart', handleDragStart);
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('touchmove', handleDrag);
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchend', handleDragEnd);
+
+        function handleDragStart(e) {
+            if (!hasImage) return;
+            isDragging = true;
+
+            const point = e.touches ? e.touches[0] : e;
+            startX = point.clientX - offsetX;
+            startY = point.clientY - offsetY;
+            e.preventDefault();
         }
 
-        // Export 버튼 클릭
-        exportBtn.addEventListener('click', () => {
-            openModal();
-        });
+        function handleDrag(e) {
+            if (!isDragging) return;
 
-        function openModal() {
-            const modal = document.getElementById('exportModal');
-            const exportImage = document.getElementById('exportImage');
-            exportImage.src = previewImage.src;
-            modal.classList.add('show');
+            const point = e.touches ? e.touches[0] : e;
+            offsetX = point.clientX - startX;
+            offsetY = point.clientY - startY;
+
+            applyTransform();
+            e.preventDefault();
         }
 
-        function closeModal() {
-            const modal = document.getElementById('exportModal');
-            modal.classList.remove('show');
+        function handleDragEnd() {
+            isDragging = false;
+        }
+
+        // Export image handling
+        exportBtn.addEventListener('click', handleExport);
+
+        function handleExport() {
+            if (!previewImage.src) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+
+            const sourceX = -offsetX * (previewImage.naturalWidth / previewImage.offsetWidth);
+            const sourceY = -offsetY * (previewImage.naturalHeight / previewImage.offsetHeight);
+
+            ctx.drawImage(previewImage, sourceX, sourceY, previewImage.naturalWidth, previewImage.naturalHeight, 0, 0, 1080, 1080);
+            ctx.drawImage(paperTexture, 0, 0, 1080, 1080);
+
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'text owve paper.jpg';
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            }, 'image/jpeg', 0.9);
         }
     </script>
 </body>
