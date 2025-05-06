@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>text owve paper</title>
-    <link rel="icon" type="image/jpg" href="http://localhost:8000/owve.jpg">
+    <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/owve.jpg">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -225,7 +225,7 @@
         <div class="preview-container" id="previewContainer">
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
             <img id="previewImage" class="preview-image" draggable="false">
-            <img id="paperOverlay" class="paper-overlay" src="http://localhost:8000/text%20owve%20paper.png" draggable="false">
+            <img id="paperOverlay" class="paper-overlay" src="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/text%20owve%20paper.png" draggable="false">
         </div>
         <button id="exportBtn">Save Image</button>
     </div>
@@ -249,7 +249,7 @@
         const exportBtn = document.getElementById('exportBtn');
         let paperTexture = new Image();
         
-        paperTexture.src = 'http://localhost:8000/text%20owve%20paper.png';
+        paperTexture.src = 'https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/text%20owve%20paper.png';
         paperTexture.crossOrigin = 'anonymous';
 
         let isDragging = false;
