@@ -302,32 +302,52 @@
     });
 
     exportBtn.addEventListener('click', () => {
-        if (!previewImage.src) return;
+    if (!previewImage.src) return;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = 1080;
-        const ctx = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
 
-        const scaleRatio = previewImage.naturalWidth / previewImage.offsetWidth;
+    const displayWidth = previewImage.offsetWidth;
+    const displayHeight = previewImage.offsetHeight;
+    const naturalWidth = previewImage.naturalWidth;
+    const naturalHeight = previewImage.naturalHeight;
 
-        const sourceX = -offsetX * scaleRatio;
-        const sourceY = -offsetY * scaleRatio;
-        const sourceWidth = previewImage.naturalWidth * scaleFactor;
-        const sourceHeight = previewImage.naturalHeight * scaleFactor;
+    const scaleRatio = naturalWidth / displayWidth;
 
-        ctx.drawImage(previewImage, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, 1080, 1080);
-        ctx.drawImage(paperTexture, 0, 0, 1080, 1080);
+    // 저장할 이미지 크기 기준
+    const drawWidth = naturalWidth * scaleFactor;
+    const drawHeight = naturalHeight * scaleFactor;
 
-        canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'text owve paper.jpg';
-            link.click();
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        }, 'image/jpeg', 0.9);
-    });
+    // 이동 반영: offsetX, offsetY는 현재 화면 기준이므로 비율로 환산
+    const sourceX = (offsetX * -1) * scaleRatio;
+    const sourceY = (offsetY * -1) * scaleRatio;
+
+    ctx.drawImage(
+        previewImage,
+        sourceX,
+        sourceY,
+        drawWidth,
+        drawHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    // 종이 질감 오버레이
+    ctx.drawImage(paperTexture, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'text owve paper.jpg';
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }, 'image/jpeg', 0.9);
+});
 </script>
 </body>
 </html>
