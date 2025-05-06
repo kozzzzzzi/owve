@@ -339,11 +339,13 @@ const minScale = 0.5;
 const maxScale = 3;
 
 let startTouchDistance = 0;
+let initialScaleFactor = scaleFactor;
 
 previewContainer.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
         // 두 손가락이 화면에 터치될 때
         startTouchDistance = getTouchDistance(e.touches);
+        initialScaleFactor = scaleFactor;
         e.preventDefault();
     }
 });
@@ -353,9 +355,8 @@ previewContainer.addEventListener('touchmove', (e) => {
         // 두 손가락으로 확대/축소하는 동안
         const currentTouchDistance = getTouchDistance(e.touches);
         const scaleChange = (currentTouchDistance - startTouchDistance) / 200;
-        scaleFactor += scaleChange;
-        scaleFactor = Math.min(Math.max(scaleFactor, 0.5), 3);
-        startTouchDistance = currentTouchDistance;
+        scaleFactor = initialScaleFactor + scaleChange;
+        scaleFactor = Math.min(Math.max(scaleFactor, minScale), maxScale);
         applyTransform();
         e.preventDefault();
     }
@@ -374,6 +375,10 @@ function getTouchDistance(touches) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
+function applyTransform() {
+    previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scaleFactor})`;
+}
+        
 // 마우스 휠로 확대/축소
 previewContainer.addEventListener('wheel', (e) => {
     if (!hasImage) return;
