@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>text owve paper</title>
+    <link rel="icon" type="image/jpg" href="http://localhost:8000/owve.jpg">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior: none;
+            color: #000000;
+        }
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+        .logo {
+            width: 50%;
+            height: auto;
+        }
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 0;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .preview-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: #ffffff;
+            border-radius: 0;
+            overflow: hidden;
+            cursor: pointer;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            transition: background-color 0.2s;
+            margin: 0;
+            border: 2px solid #000000;
+            border-bottom: none;
+            box-sizing: border-box;
+        }
+        .preview-container:not(.has-image):hover {
+            background-color: #f8f8f8;
+        }
+        .preview-container.has-image {
+            cursor: ns-resize;
+            background-color: #ffffff;
+        }
+        .preview-container.has-image.horizontal {
+            cursor: ew-resize;
+        }
+        .preview-container::before {
+            content: 'Click to Upload Image';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000;
+            z-index: 1;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            text-transform: lowercase;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .preview-container::before {
+                content: 'Tap to Upload Image';
+            }
+        }
+        .preview-container.has-image::before {
+            opacity: 0;
+        }
+        .preview-image {
+            position: absolute;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+        }
+        .preview-image.loaded {
+            opacity: 1;
+        }
+        .paper-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+        }
+        .paper-overlay.loaded {
+            opacity: 1;
+        }
+        button {
+            width: 100%;
+            padding: 12px 0;
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            border-radius: 0;
+            cursor: pointer;
+            margin: 0;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            text-transform: lowercase;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            z-index: 2;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            user-select: none;
+            font-weight: 500;
+            box-sizing: border-box;
+            border-bottom: none;
+        }
+        button:last-child {
+            border-bottom: 2px solid #000000;
+        }
+        button:active {
+            background-color: #f8f8f8;
+        }
+        @media (hover: hover) {
+            button:hover {
+                background-color: #f8f8f8;
+            }
+        }
+        .actions {
+            display: block;
+            width: 100%;
+            margin: 0;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .modal img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-text {
+            color: white;
+            margin: 15px 0;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        @media (max-width: 768px) {
+            .modal-text {
+                font-size: 14px;
+            }
+        }
+
+        .sequence-btn {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-section">
+        <div class="preview-container" id="previewContainer">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <img id="previewImage" class="preview-image" draggable="false">
+            <img id="paperOverlay" class="paper-overlay" src="http://localhost:8000/text%20owve%20paper.png" draggable="false">
+        </div>
+        <button id="exportBtn">Save Image</button>
+    </div>
+
+    <!-- Add modal markup -->
+    <div class="modal" id="exportModal">
+        <div class="modal-text">
+            Press and hold the image to save
+        </div>
+        <img id="exportImage" alt="Preview">
+        <div class="modal-buttons">
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const paperOverlay = document.getElementById('paperOverlay');
+        const exportBtn = document.getElementById('exportBtn');
+        let paperTexture = new Image();
+        
+        paperTexture.src = 'http://localhost:8000/text%20owve%20paper.png';
+        paperTexture.crossOrigin = 'anonymous';
+
+        let isDragging = false;
+        let startY = 0;
+        let startX = 0;
+        let offsetY = 0;
+        let offsetX = 0;
+        let isHorizontal = false;
+        let hasImage = false;
+        let lastTouchTime = 0;
+
+        // Prevent default touch behaviors
+        document.addEventListener('touchmove', (e) => {
+            if (hasImage) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchstart', (e) => {
+            if (hasImage) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Handle click/tap for upload
+        previewContainer.addEventListener('click', (e) => {
+            // Prevent double-tap zoom on mobile
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTouchTime;
+            lastTouchTime = currentTime;
+            if (tapLength < 500 && tapLength > 0) {
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!hasImage && !isDragging) {
+                imageInput.click();
+            }
+        });
+
+        // Image upload handling
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = function() {
+                        const containerWidth = previewContainer.offsetWidth;
+                        const containerHeight = containerWidth;
+                        
+                        const imageAspect = img.width / img.height;
+                        isHorizontal = imageAspect > 1;
+                        
+                        if (isHorizontal) {
+                            const height = containerHeight;
+                            const width = height * imageAspect;
+                            previewImage.style.height = `${height}px`;
+                            previewImage.style.width = `${width}px`;
+                            previewContainer.classList.add('horizontal');
+                        } else {
+                            const width = containerWidth;
+                            const height = width / imageAspect;
+                            previewImage.style.width = `${width}px`;
+                            previewImage.style.height = `${height}px`;
+                            previewContainer.classList.remove('horizontal');
+                        }
+                        
+                        previewImage.src = e.target.result;
+                        hasImage = true;
+                        previewContainer.classList.add('has-image');
+                        previewImage.classList.add('loaded');
+                        paperOverlay.classList.add('loaded');
+                        
+                        offsetX = 0;
+                        offsetY = 0;
+                        updateImagePosition();
+                    }
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        let scaleFactor = 1;
+const minScale = 0.5;
+const maxScale = 3;
+
+// 마우스 휠로 확대/축소
+previewContainer.addEventListener('wheel', (e) => {
+    if (!hasImage) return;
+
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    scaleFactor = Math.min(maxScale, Math.max(minScale, scaleFactor + delta));
+    applyTransform();
+}, { passive: false });
+
+function applyTransform() {
+    previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scaleFactor})`;
+}
+
+// Touch event handling
+previewContainer.addEventListener('touchstart', handleDragStart);
+document.addEventListener('touchmove', handleDrag);
+document.addEventListener('touchend', handleDragEnd);
+
+// Mouse event handling
+previewContainer.addEventListener('mousedown', handleDragStart);
+document.addEventListener('mousemove', handleDrag);
+document.addEventListener('mouseup', handleDragEnd);
+
+function handleDragStart(e) {
+    if (!hasImage) return;
+    isDragging = true;
+    
+    const point = e.touches ? e.touches[0] : e;
+    startX = point.clientX - offsetX;
+    startY = point.clientY - offsetY;
+    
+    e.preventDefault();
+}
+
+function handleDrag(e) {
+    if (!isDragging) return;
+    
+    const point = e.touches ? e.touches[0] : e;
+    
+    if (isHorizontal) {
+        offsetX = point.clientX - startX;
+    } else {
+        offsetY = point.clientY - startY;
+    }
+    
+    updateImagePosition();
+    e.preventDefault();
+}
+
+function handleDragEnd() {
+    isDragging = false;
+}
+
+function updateImagePosition() {
+    const scaledWidth = previewImage.offsetWidth * scaleFactor;
+    const scaledHeight = previewImage.offsetHeight * scaleFactor;
+    const containerWidth = previewContainer.offsetWidth;
+    const containerHeight = previewContainer.offsetHeight;
+
+    const maxOffsetX = Math.max(0, (scaledWidth - containerWidth));
+    const maxOffsetY = Math.max(0, (scaledHeight - containerHeight));
+
+    offsetX = Math.min(0, Math.max(offsetX, -maxOffsetX));
+    offsetY = Math.min(0, Math.max(offsetY, -maxOffsetY));
+
+    applyTransform();
+}
+
+        // Add modal functions
+        const modal = document.getElementById('exportModal');
+        const exportImage = document.getElementById('exportImage');
+        
+        function closeModal() {
+            modal.classList.remove('show');
+        }
+        
+        // Add multiple event listeners for better mobile support
+        ['touchstart', 'touchend', 'click'].forEach(eventType => {
+            exportBtn.addEventListener(eventType, (e) => {
+                e.preventDefault(); // Prevent default behavior
+                if (e.type === 'touchend' || e.type === 'click') {
+                    handleExport();
+                }
+            }, { passive: false });
+        });
+
+        // Separate the export logic into its own function
+        function handleExport() {
+            if (!previewImage.src) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+
+            const containerRect = previewContainer.getBoundingClientRect();
+            const scale = 1080 / containerRect.width;
+            
+            const sourceX = isHorizontal ? -offsetX * (previewImage.naturalWidth / previewImage.offsetWidth) : 0;
+            const sourceY = !isHorizontal ? -offsetY * (previewImage.naturalHeight / previewImage.offsetHeight) : 0;
+            const sourceSize = isHorizontal ? 
+                (previewImage.naturalHeight) : 
+                (previewImage.naturalWidth);
+            
+            ctx.drawImage(
+                previewImage,
+                sourceX,
+                sourceY,
+                sourceSize,
+                sourceSize,
+                0,
+                0,
+                1080,
+                1080
+            );
+
+            ctx.drawImage(paperTexture, 0, 0, 1080, 1080);
+
+            // Convert canvas to blob
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'text owve paper.jpg';
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            }, 'image/jpeg', 0.9);
+        }
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
