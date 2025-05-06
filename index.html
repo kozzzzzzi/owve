@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>text owve paper</title>
-    <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/owve.jpg">
+    <link rel="icon" type="image/jpg" href="http://localhost:8000/owve.jpg">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -161,7 +161,7 @@
             width: 100%;
             margin: 0;
         }
-
+        
         /* Modal styles */
         .modal {
             display: none;
@@ -176,11 +176,11 @@
             align-items: center;
             flex-direction: column;
         }
-
+        
         .modal.show {
             display: flex;
         }
-
+        
         .modal-content {
             background: white;
             padding: 20px;
@@ -188,33 +188,33 @@
             max-width: 90%;
             text-align: center;
         }
-
+        
         .modal img {
             max-width: 100%;
             height: auto;
             margin-bottom: 15px;
         }
-
+        
         .modal-buttons {
             display: flex;
             justify-content: center;
             gap: 10px;
             margin-top: 15px;
         }
-
+        
         .modal-text {
             color: white;
             margin: 15px 0;
             text-align: center;
             padding: 0 20px;
         }
-
+        
         @media (max-width: 768px) {
             .modal-text {
                 font-size: 14px;
             }
         }
-
+        
         .sequence-btn {
             margin-top: 0;
         }
@@ -225,7 +225,7 @@
         <div class="preview-container" id="previewContainer">
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
             <img id="previewImage" class="preview-image" draggable="false">
-            <img id="paperOverlay" class="paper-overlay" src="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/text%20owve%20paper.png" draggable="false">
+            <img id="paperOverlay" class="paper-overlay" src="http://localhost:8000/text%20owve%20paper.png" draggable="false">
         </div>
         <button id="exportBtn">Save Image</button>
     </div>
@@ -249,7 +249,7 @@
         const exportBtn = document.getElementById('exportBtn');
         let paperTexture = new Image();
         
-        paperTexture.src = 'https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/text%20owve%20paper.png';
+        paperTexture.src = 'http://localhost:8000/text%20owve%20paper.png';
         paperTexture.crossOrigin = 'anonymous';
 
         let isDragging = false;
@@ -260,6 +260,9 @@
         let isHorizontal = false;
         let hasImage = false;
         let lastTouchTime = 0;
+        let scaleFactor = 1;
+        const minScale = 0.5;
+        const maxScale = 3;
 
         // Prevent default touch behaviors
         document.addEventListener('touchmove', (e) => {
@@ -334,187 +337,87 @@
             }
         });
 
-        let scaleFactor = 1;
-const minScale = 0.5;
-const maxScale = 3;
+        // 마우스 휠로 확대/축소
+        previewContainer.addEventListener('wheel', (e) => {
+            if (!hasImage) return;
 
-let startTouchDistance = 0;
-let initialScaleFactor = scaleFactor;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            scaleFactor = Math.min(maxScale, Math.max(minScale, scaleFactor + delta));
+            applyTransform();
+        }, { passive: false });
 
-previewContainer.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 2) {
-        // 두 손가락이 화면에 터치될 때
-        startTouchDistance = getTouchDistance(e.touches);
-        initialScaleFactor = scaleFactor;
-        e.preventDefault();
-    }
-});
+        // 터치 확대/축소
+        let startTouchDistance = 0;
+        let initialScaleFactor = scaleFactor;
 
-previewContainer.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 2) {
-        // 두 손가락으로 확대/축소하는 동안
-        const currentTouchDistance = getTouchDistance(e.touches);
-        const scaleChange = (currentTouchDistance - startTouchDistance) / 200;
-        scaleFactor = initialScaleFactor + scaleChange;
-        scaleFactor = Math.min(Math.max(scaleFactor, minScale), maxScale);
-        applyTransform();
-        e.preventDefault();
-    }
-});
-
-previewContainer.addEventListener('touchend', (e) => {
-    if (e.touches.length < 2) {
-        startTouchDistance = 0;
-    }
-});
-
-// 두 손가락 사이의 거리 계산
-function getTouchDistance(touches) {
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-function applyTransform() {
-    previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scaleFactor})`;
-}
-        
-// 마우스 휠로 확대/축소
-previewContainer.addEventListener('wheel', (e) => {
-    if (!hasImage) return;
-
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    scaleFactor = Math.min(maxScale, Math.max(minScale, scaleFactor + delta));
-    applyTransform();
-}, { passive: false });
-
-function applyTransform() {
-    previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scaleFactor})`;
-}
-
-// Touch event handling
-previewContainer.addEventListener('touchstart', handleDragStart);
-document.addEventListener('touchmove', handleDrag);
-document.addEventListener('touchend', handleDragEnd);
-
-// Mouse event handling
-previewContainer.addEventListener('mousedown', handleDragStart);
-document.addEventListener('mousemove', handleDrag);
-document.addEventListener('mouseup', handleDragEnd);
-
-function handleDragStart(e) {
-    if (!hasImage) return;
-    isDragging = true;
-    
-    const point = e.touches ? e.touches[0] : e;
-    startX = point.clientX - offsetX;
-    startY = point.clientY - offsetY;
-    
-    e.preventDefault();
-}
-
-function handleDrag(e) {
-    if (!isDragging) return;
-    
-    const point = e.touches ? e.touches[0] : e;
-    
-    if (isHorizontal) {
-        offsetX = point.clientX - startX;
-    } else {
-        offsetY = point.clientY - startY;
-    }
-    
-    updateImagePosition();
-    e.preventDefault();
-}
-
-function handleDragEnd() {
-    isDragging = false;
-}
-
-function updateImagePosition() {
-    const scaledWidth = previewImage.offsetWidth * scaleFactor;
-    const scaledHeight = previewImage.offsetHeight * scaleFactor;
-    const containerWidth = previewContainer.offsetWidth;
-    const containerHeight = previewContainer.offsetHeight;
-
-    const maxOffsetX = Math.max(0, (scaledWidth - containerWidth));
-    const maxOffsetY = Math.max(0, (scaledHeight - containerHeight));
-
-    offsetX = Math.min(0, Math.max(offsetX, -maxOffsetX));
-    offsetY = Math.min(0, Math.max(offsetY, -maxOffsetY));
-
-    applyTransform();
-}
-
-        // Add modal functions
-        const modal = document.getElementById('exportModal');
-        const exportImage = document.getElementById('exportImage');
-        
-        function closeModal() {
-            modal.classList.remove('show');
-        }
-        
-        // Add multiple event listeners for better mobile support
-        ['touchstart', 'touchend', 'click'].forEach(eventType => {
-            exportBtn.addEventListener(eventType, (e) => {
-                e.preventDefault(); // Prevent default behavior
-                if (e.type === 'touchend' || e.type === 'click') {
-                    handleExport();
-                }
-            }, { passive: false });
-        });
-
-        // Separate the export logic into its own function
-        function handleExport() {
-            if (!previewImage.src) return;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 1080;
-            canvas.height = 1080;
-            const ctx = canvas.getContext('2d');
-
-            const containerRect = previewContainer.getBoundingClientRect();
-            const scale = 1080 / containerRect.width;
-            
-            const sourceX = isHorizontal ? -offsetX * (previewImage.naturalWidth / previewImage.offsetWidth) : 0;
-            const sourceY = !isHorizontal ? -offsetY * (previewImage.naturalHeight / previewImage.offsetHeight) : 0;
-            const sourceSize = isHorizontal ? 
-                (previewImage.naturalHeight) : 
-                (previewImage.naturalWidth);
-            
-            ctx.drawImage(
-                previewImage,
-                sourceX,
-                sourceY,
-                sourceSize,
-                sourceSize,
-                0,
-                0,
-                1080,
-                1080
-            );
-
-            ctx.drawImage(paperTexture, 0, 0, 1080, 1080);
-
-            // Convert canvas to blob
-            canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'text owve paper.jpg';
-                link.click();
-                setTimeout(() => URL.revokeObjectURL(url), 100);
-            }, 'image/jpeg', 0.9);
-        }
-
-        // Close modal when clicking outside
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
+        previewContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                startTouchDistance = getTouchDistance(e.touches);
+                initialScaleFactor = scaleFactor;
+                e.preventDefault();
             }
         });
+
+        previewContainer.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const currentTouchDistance = getTouchDistance(e.touches);
+                const scaleChange = (currentTouchDistance - startTouchDistance) / 200;
+                scaleFactor = initialScaleFactor + scaleChange;
+                scaleFactor = Math.min(Math.max(scaleFactor, minScale), maxScale);
+                applyTransform();
+                e.preventDefault();
+            }
+        });
+
+        previewContainer.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                startTouchDistance = 0;
+            }
+        });
+
+        // 두 손가락 사이의 거리 계산
+        function getTouchDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function applyTransform() {
+            const scaledWidth = previewImage.offsetWidth * scaleFactor;
+            const scaledHeight = previewImage.offsetHeight * scaleFactor;
+            const containerWidth = previewContainer.offsetWidth;
+            const containerHeight = previewContainer.offsetHeight;
+
+            const maxOffsetX = Math.max(0, (scaledWidth - containerWidth));
+            const maxOffsetY = Math.max(0, (scaledHeight - containerHeight));
+
+            offsetX = Math.min(0, Math.max(offsetX, -maxOffsetX));
+            offsetY = Math.min(0, Math.max(offsetY, -maxOffsetY));
+
+            previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scaleFactor})`;
+        }
+
+        function updateImagePosition() {
+            previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
+        }
+
+        // Export 버튼 클릭
+        exportBtn.addEventListener('click', () => {
+            openModal();
+        });
+
+        function openModal() {
+            const modal = document.getElementById('exportModal');
+            const exportImage = document.getElementById('exportImage');
+            exportImage.src = previewImage.src;
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('exportModal');
+            modal.classList.remove('show');
+        }
     </script>
 </body>
 </html>
