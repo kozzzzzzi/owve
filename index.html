@@ -181,6 +181,16 @@
     let scaleFactor = 1;
     let hasImage = false;
 
+    function updatePreviewImage() {
+    const img = previewImage;
+    img.style.left = `${offsetX}px`;
+    img.style.top = `${offsetY}px`;
+    img.style.width = `${img.naturalWidth * scaleFactor}px`;
+    img.style.height = `${img.naturalHeight * scaleFactor}px`;
+    img.style.transform = 'none'; // transform 제거
+    img.style.position = 'absolute';
+}
+    
     let lastTouchDistance = null;
 
     const minScale = 0.5;
@@ -318,11 +328,11 @@
     const scaledHeight = naturalHeight * scaleFactor;
 
     // 보이는 뷰포트에서 이미지가 잘리는 시작 좌표 계산 (원본 기준)
-    const sx = ((scaledWidth - naturalWidth) / 2 - offsetX * (naturalWidth / displaySize));
-    const sy = ((scaledHeight - naturalHeight) / 2 - offsetY * (naturalHeight / displaySize));
+    const sx = -offsetX * (naturalWidth / (naturalWidth * scaleFactor));
+const sy = -offsetY * (naturalHeight / (naturalHeight * scaleFactor));
+const sWidth = canvas.width * (naturalWidth / (naturalWidth * scaleFactor));
+const sHeight = canvas.height * (naturalHeight / (naturalHeight * scaleFactor));
 
-    const sWidth = naturalWidth / scaleFactor;
-    const sHeight = naturalHeight / scaleFactor;
 
     ctx.drawImage(previewImage, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
 
