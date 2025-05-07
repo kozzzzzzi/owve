@@ -1,353 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>text owve paper</title>
-    <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/owve.jpg">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            overscroll-behavior: none;
-            color: #000000;
-        }
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
-        }
-        .logo {
-            width: 50%;
-            height: auto;
-        }
-        .preview-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 0;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            box-sizing: border-box;
-        }
-        .preview-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            background-color: #ffffff;
-            border-radius: 0;
-            overflow: hidden;
-            cursor: pointer;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-            transition: background-color 0.2s;
-            margin: 0;
-            border: 2px solid #000000;
-            border-bottom: none;
-            box-sizing: border-box;
-        }
-        .preview-container:not(.has-image):hover {
-            background-color: #f8f8f8;
-        }
-        .preview-container.has-image {
-            cursor: move;
-            background-color: #ffffff;
-        }
-        .preview-container::before {
-            content: 'Click to Upload Image';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #000;
-            z-index: 1;
-            pointer-events: none;
-            transition: opacity 0.2s;
-            font-size: 14px;
-            letter-spacing: 0.05em;
-            text-transform: lowercase;
-        }
-        .preview-container.has-image::before {
-            opacity: 0;
-        }
-        .preview-image {
-            position: absolute;
-            pointer-events: none;
-            user-select: none;
-            -webkit-user-select: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            will-change: transform;
-            transform: translate3d(0, 0, 0);
-        }
-        .preview-image.loaded {
-            opacity: 1;
-        }
-        .paper-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 0.3s;
-            will-change: transform;
-            transform: translate3d(0, 0, 0);
-        }
-        .paper-overlay.loaded {
-            opacity: 1;
-        }
-        button {
-            width: 100%;
-            padding: 12px 0;
-            background-color: #ffffff;
-            color: #000000;
-            border: 2px solid #000000;
-            border-radius: 0;
-            cursor: pointer;
-            margin: 0;
-            font-size: 14px;
-            letter-spacing: 0.05em;
-            text-transform: lowercase;
-            transition: all 0.2s;
-            -webkit-tap-highlight-color: transparent;
-            position: relative;
-            z-index: 2;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-            user-select: none;
-            font-weight: 500;
-            box-sizing: border-box;
-            border-bottom: none;
-        }
-        button:last-child {
-            border-bottom: 2px solid #000000;
-        }
-        button:active {
-            background-color: #f8f8f8;
-        }
-        @media (hover: hover) {
-            button:hover {
-                background-color: #f8f8f8;
-            }
-        }
-        .actions {
-            display: block;
-            width: 100%;
-            margin: 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>owve</title>
+  <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/owve.jpg" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .logo {
+      max-width: 100%;
+      width: 300px;
+      height: auto;
+    }
+
+    @media (max-width: 480px) {
+      .logo {
+        width: 80%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="preview-section">
-        <div class="preview-container" id="previewContainer">
-            <input type="file" id="imageInput" accept="image/*" style="display: none;">
-            <img id="previewImage" class="preview-image" draggable="false">
-            <img id="paperOverlay" class="paper-overlay" src="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/text%20owve%20paper.png" draggable="false">
-        </div>
-        <button id="exportBtn">Save Image</button>
-    </div>
-
-<script>
-    const imageInput = document.getElementById('imageInput');
-    const previewContainer = document.getElementById('previewContainer');
-    const previewImage = document.getElementById('previewImage');
-    const paperOverlay = document.getElementById('paperOverlay');
-    const exportBtn = document.getElementById('exportBtn');
-
-    let paperTexture = new Image();
-    paperTexture.src = 'https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/text%20owve%20paper.png';
-    paperTexture.crossOrigin = 'anonymous';
-
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let offsetX = 0;
-    let offsetY = 0;
-    let scaleFactor = 1;
-    let hasImage = false;
-
-    function updatePreviewImage() {
-    const img = previewImage;
-    img.style.left = `${offsetX}px`;
-    img.style.top = `${offsetY}px`;
-    img.style.width = `${img.naturalWidth * scaleFactor}px`;
-    img.style.height = `${img.naturalHeight * scaleFactor}px`;
-    img.style.transform = 'none'; // transform 제거
-    img.style.position = 'absolute';
-}
-    
-    let lastTouchDistance = null;
-
-    const minScale = 0.5;
-    const maxScale = 3;
-
-    document.addEventListener('touchmove', (e) => {
-        if (hasImage) e.preventDefault();
-    }, { passive: false });
-
-    previewContainer.addEventListener('click', (e) => {
-        if (!hasImage && !isDragging) {
-            imageInput.click();
-        }
-    });
-
-    imageInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = function () {
-                    const containerWidth = previewContainer.offsetWidth;
-                    const containerHeight = containerWidth;
-
-                    const imageAspect = img.width / img.height;
-                    const width = containerWidth;
-                    const height = width / imageAspect;
-
-                    previewImage.style.width = `${width}px`;
-                    previewImage.style.height = `${height}px`;
-                    previewImage.src = e.target.result;
-                    hasImage = true;
-                    previewContainer.classList.add('has-image');
-                    previewImage.classList.add('loaded');
-                    paperOverlay.classList.add('loaded');
-                }
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    previewContainer.addEventListener('wheel', (e) => {
-        if (!hasImage) return;
-
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        scaleFactor = Math.min(maxScale, Math.max(minScale, scaleFactor + delta));
-        applyTransform();
-    }, { passive: false });
-
-    // 👉 모바일 핀치 확대/축소 처리
-    previewContainer.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            lastTouchDistance = getDistance(e.touches[0], e.touches[1]);
-        } else if (e.touches.length === 1) {
-            const point = e.touches[0];
-            isDragging = true;
-            startX = point.clientX - offsetX;
-            startY = point.clientY - offsetY;
-        }
-    });
-
-    previewContainer.addEventListener('touchmove', (e) => {
-        if (!hasImage) return;
-
-        if (e.touches.length === 2) {
-            const currentDistance = getDistance(e.touches[0], e.touches[1]);
-            if (lastTouchDistance !== null) {
-                const diff = currentDistance - lastTouchDistance;
-                const scaleDelta = diff / 200;
-                scaleFactor = Math.min(maxScale, Math.max(minScale, scaleFactor + scaleDelta));
-                applyTransform();
-            }
-            lastTouchDistance = currentDistance;
-        } else if (e.touches.length === 1 && isDragging) {
-            const point = e.touches[0];
-            offsetX = point.clientX - startX;
-            offsetY = point.clientY - startY;
-            applyTransform();
-        }
-    });
-
-    previewContainer.addEventListener('touchend', (e) => {
-        isDragging = false;
-        if (e.touches.length < 2) {
-            lastTouchDistance = null;
-        }
-    });
-
-    // 거리 계산 함수
-    function getDistance(touch1, touch2) {
-        const dx = touch2.clientX - touch1.clientX;
-        const dy = touch2.clientY - touch1.clientY;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    function applyTransform() {
-        previewImage.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scaleFactor})`;
-    }
-
-    previewContainer.addEventListener('mousedown', (e) => {
-        if (!hasImage) return;
-        isDragging = true;
-        startX = e.clientX - offsetX;
-        startY = e.clientY - offsetY;
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        offsetX = e.clientX - startX;
-        offsetY = e.clientY - startY;
-        applyTransform();
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
-
-    exportBtn.addEventListener('click', () => {
-    if (!previewImage.src) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-
-    const naturalWidth = previewImage.naturalWidth;
-    const naturalHeight = previewImage.naturalHeight;
-    const displaySize = previewContainer.offsetWidth;
-
-    // 스케일 적용된 이미지 크기
-    const scaledWidth = naturalWidth * scaleFactor;
-    const scaledHeight = naturalHeight * scaleFactor;
-
-    // 보이는 뷰포트에서 이미지가 잘리는 시작 좌표 계산 (원본 기준)
-    const sx = -offsetX * (naturalWidth / (naturalWidth * scaleFactor));
-const sy = -offsetY * (naturalHeight / (naturalHeight * scaleFactor));
-const sWidth = canvas.width * (naturalWidth / (naturalWidth * scaleFactor));
-const sHeight = canvas.height * (naturalHeight / (naturalHeight * scaleFactor));
-
-
-    ctx.drawImage(previewImage, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-
-    // 종이 질감 오버레이
-    ctx.drawImage(paperTexture, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'text owve paper.jpg';
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-    }, 'image/jpeg', 0.9);
-});
-</script>
+  <div class="container">
+    <img src="text owve paper.png" alt="owve logo" class="logo" />
+  </div>
 </body>
 </html>
