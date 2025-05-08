@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>owve</title>
+  <title>XGALX NEW BOY GROUP</title>
   <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/owve.jpg" />
   <style>
     * {
@@ -13,7 +13,7 @@
     }
 
     body {
-      background-color: #fff;
+      background-color: #060802;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -22,27 +22,104 @@
     }
 
     .container {
-      max-width: 100%;
       padding: 20px;
       text-align: center;
     }
 
-    .logo {
+    .main-image {
+      width: 650px;
       max-width: 100%;
-      width: 300px;
       height: auto;
+      cursor: pointer;
     }
 
-    @media (max-width: 480px) {
-      .logo {
-        width: 80%;
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      position: relative;
+      width: 90%;
+      max-width: 800px;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    video {
+  width: auto;
+  max-height: 90vh;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+}
+
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      color: #fff;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    @media (max-width: 768px) {
+      .modal-content {
+        width: 95%;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/owve-pre.png" alt="owve logo" class="logo" />
+    <img src="https://raw.githubusercontent.com/kozzzzzzi/owve/refs/heads/main/xnb.jpg" alt="XGALX New Boy Group" class="main-image" id="openModal" />
   </div>
+
+  <!-- 모달 -->
+  <div class="modal" id="videoModal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeModal">&times;</span>
+      <video id="localVideo" controls>
+        <source src="teaser (Care Ver.).mp4" type="video/mp4" />
+        브라우저가 비디오 태그를 지원하지 않습니다.
+      </video>      
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById("videoModal");
+    const openBtn = document.getElementById("openModal");
+    const closeBtn = document.getElementById("closeModal");
+    const video = document.getElementById("localVideo");
+
+    openBtn.onclick = () => {
+      modal.style.display = "flex";
+      video.currentTime = 0;
+      video.play();
+    };
+
+    closeBtn.onclick = () => {
+      modal.style.display = "none";
+      video.pause();
+    };
+
+    window.onclick = (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+        video.pause();
+      }
+    };
+  </script>
 </body>
 </html>
